@@ -15,7 +15,7 @@ app = FlaskOIDC(__name__)
 
 ## Configurations:
 
-Please make sure to extend your configurations from `DAPConfig`, as it's really IMPORTANT.
+Please make sure to extend your configurations from `BaseConfig`.
 
 ```python
 from flaskoidc import FlaskOIDC
