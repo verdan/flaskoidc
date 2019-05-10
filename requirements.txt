@@ -1,0 +1,4 @@
+FLASK
+flask_oidc
+flask-sqlalchemy
+flask-session
