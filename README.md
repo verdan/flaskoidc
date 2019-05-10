@@ -53,5 +53,7 @@ which is very vulnerable. This adds the support of custom session store.
 By default the path of database is `sqlite://` and can be configured using the environment variable `FLASK_OIDC_SQLALCHEMY_DATABASE_URI`
 
 
-
+## ToDo
+- Add exmaple application
+- Add logging
 
