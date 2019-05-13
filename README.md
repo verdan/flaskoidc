@@ -55,5 +55,7 @@ By default the path of database is `sqlite:///sessions.db` and can be configured
 
 ## ToDo
 - Add exmaple application
+- Configurable token validation (local vs server side on each request)
+- Token Refresh
 - Add logging
 
