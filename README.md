@@ -1,5 +1,8 @@
 # FlaskOIDC
-A wrapper of Flask with pre-configured OIDC support. 
+[![PyPI version](https://badge.fury.io/py/flaskoidc.svg)](https://badge.fury.io/py/flaskoidc)
+[![License](http://img.shields.io/:license-Apache%202-blue.svg)](LICENSE)
+
+A wrapper of Flask with pre-configured OIDC support. Ideal for microservices architecture, each request will be authenticated using Flask's `before_request` middleware. Necassary endpoints can be whitelisted using an environment variable `FLASK_OIDC_WHITELISTED_ENDPOINTS`. 
 
 ## Usage:
 
@@ -12,7 +15,7 @@ app = FlaskOIDC(__name__)
 
 ## Configurations:
 
-Please make sure to extend your configurations from `DAPConfig`, as it's really IMPORTANT.
+Please make sure to extend your configurations from `BaseConfig`.
 
 ```python
 from flaskoidc import FlaskOIDC
@@ -47,8 +50,12 @@ FLASK_OIDC_SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
 ## Session Management
 This extension uses SQLAlchemy to hold the sessions of the users. Flask OIDC saves the sessions in memory by default 
 which is very vulnerable. This adds the support of custom session store. 
-By default the path of database is `sqlite://` and can be configured using the environment variable `FLASK_OIDC_SQLALCHEMY_DATABASE_URI`
+By default the path of database is `sqlite:///sessions.db` and can be configured using the environment variable `FLASK_OIDC_SQLALCHEMY_DATABASE_URI`
 
 
-
+## ToDo
+- Add exmaple application
+- Configurable token validation (local vs server side on each request)
+- Token Refresh
+- Add logging
 
