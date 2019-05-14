@@ -33,8 +33,8 @@ Following environment variables along with their default values are available an
 # Flask `SECRET_KEY` config value
 FLASK_OIDC_SECRET_KEY: 'base-flask-oidc-secret-key'
 
-# List of URLs which should be exposed without authentication, else all request will be authenticated.
-FLASK_OIDC_WHITELISTED_ENDPOINTS: ['status', 'healthcheck', 'health']
+# Comma separated string of URLs which should be exposed without authentication, else all request will be authenticated.
+FLASK_OIDC_WHITELISTED_ENDPOINTS: "status,healthcheck,health"
 
 # Path of your configuration file. (default value assumes you have a `config/client_secrets.json` available.
 FLASK_OIDC_CLIENT_SECRETS: 'config/client_secrets.json'
