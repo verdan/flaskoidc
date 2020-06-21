@@ -12,7 +12,7 @@ class FlaskOIDC(Flask):
     def _before_request(self):
         # ToDo: Need to refactor and divide this method in functions.
         # Whitelisted Endpoints i.e., health checks and status url
-        if request.endpoint in BaseConfig.WHITELISTED_ENDPOINTS.split(","):
+        if request.path.strip("/") in BaseConfig.WHITELISTED_ENDPOINTS.split(","):
             return
 
         # If accepting token in the request headers

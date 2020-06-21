@@ -21,7 +21,7 @@ Please make sure to extend your configurations from `BaseConfig`.
 from flaskoidc import FlaskOIDC
 from flaskoidc.config import BaseConfig
 
-# Custom configuration class, a subclass of DAPConfig
+# Custom configuration class, a subclass of BaseConfig
 CustomConfig(BaseConfig):
     DEBUG = True
 
@@ -44,7 +44,25 @@ FLASK_OIDC_CLIENT_SECRETS: 'config/client_secrets.json'
 
 # Details about this below in the "Session Management" section.
 FLASK_OIDC_SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
+```
 
+### Client Secrets File:
+The client secrets file looks like this:
+
+`client_secrets.json`
+```json
+{
+    "web": {
+        "issuer": "http://localhost:8080/auth/realms/master",
+        "issuer_admin": "http://localhost:8080/auth/admin/realms/master",
+        "auth_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/auth",
+        "client_id": "my-application-id",
+        "client_secret": "my-application-secret-in-keycloak",
+        "userinfo_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/userinfo",
+        "token_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/token",
+        "token_introspection_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/token/introspect"
+    }
+}
 ```
 
 ## Session Management
