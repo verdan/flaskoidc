@@ -1,3 +1,5 @@
+import logging
+
 from flask import redirect, Flask, request
 from flask.helpers import get_env, get_debug_flag
 from flask_oidc import OpenIDConnect
@@ -7,12 +9,19 @@ from flask_sqlalchemy import SQLAlchemy
 from flaskoidc.config import BaseConfig
 from flaskoidc.store import SessionCredentialStore
 
+LOGGER = logging.getLogger(__name__)
+
 
 class FlaskOIDC(Flask):
     def _before_request(self):
         # ToDo: Need to refactor and divide this method in functions.
         # Whitelisted Endpoints i.e., health checks and status url
-        if request.path.strip("/") in BaseConfig.WHITELISTED_ENDPOINTS.split(","):
+        LOGGER.info(f"Request Path: {request.path}")
+        LOGGER.info(f"Request Endpoint: {request.endpoint}")
+        LOGGER.info(f"Whitelisted Endpoint: {BaseConfig.WHITELISTED_ENDPOINTS}")
+
+        if request.path.strip("/") in BaseConfig.WHITELISTED_ENDPOINTS.split(",") or \
+                request.endpoint in BaseConfig.WHITELISTED_ENDPOINTS.split(","):
             return
 
         # If accepting token in the request headers
