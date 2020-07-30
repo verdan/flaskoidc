@@ -6,7 +6,7 @@ requirements_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'r
 with open(requirements_path) as requirements_file:
     requirements = requirements_file.readlines()
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 setup(
     name='flaskoidc',
