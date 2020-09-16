@@ -14,7 +14,6 @@ LOGGER = logging.getLogger(__name__)
 
 class FlaskOIDC(Flask):
 
-
     def _before_request(self):
         # ToDo: Need to refactor and divide this method in functions.
         # Whitelisted Endpoints i.e., health checks and status url
@@ -44,7 +43,7 @@ class FlaskOIDC(Flask):
         # If not accepting a request, verify if the user is logged in
         with self.app_context():
             try:
-                if hasattr(g, 'oidc_id_token') and self.oidc.user_loggedin:
+                if self.oidc.user_loggedin:
                     access_token = self.oidc.get_access_token()
                     assert access_token
                     is_valid = self.oidc.validate_token(access_token)
