@@ -93,7 +93,7 @@ The client secrets file looks like this:
 ## Session Management
 This extension uses SQLAlchemy to hold the sessions of the users. Flask OIDC saves the sessions in memory by default 
 which is very vulnerable. This adds the support of custom session store. 
-By default the path of database is `sqlite:///sessions.db` and can be configured using the environment variable `FLASK_OIDC_SQLALCHEMY_DATABASE_URI`
+By default the path of database is `sqlite:///sessions.db` and can be configured using the environment variable `SQLALCHEMY_DATABASE_URI`
 
 
 ## ToDo
