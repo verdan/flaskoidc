@@ -15,7 +15,7 @@ app = FlaskOIDC(__name__)
 
 ## Configurations:
 
-Please make sure to extend your configurations from `BaseConfig`.
+Please make sure to extend your configurations from `BaseConfig` (only if you are sure what you are doing. Recommended way is to use the environment variables for the configuration.)
 
 ```python
 from flaskoidc import FlaskOIDC
@@ -30,7 +30,7 @@ app.config.from_object(CustomConfig)
 
 ```
 
-Following environment variables along with their default values are available and must be set based on the settings. 
+Following environment variables along with their default values are available for `flaskoidc`. 
 
 ```python
 # Flask `SECRET_KEY` config value
@@ -39,14 +39,39 @@ FLASK_OIDC_SECRET_KEY: 'base-flask-oidc-secret-key'
 # Comma separated string of URLs which should be exposed without authentication, else all request will be authenticated.
 FLASK_OIDC_WHITELISTED_ENDPOINTS: "status,healthcheck,health"
 
-# Path of your configuration file. (default value assumes you have a `config/client_secrets.json` available.
-FLASK_OIDC_CLIENT_SECRETS: 'config/client_secrets.json'
-
-# Details about this below in the "Session Management" section.
-FLASK_OIDC_SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
+FLASK_OIDC_LOG_DATE_FORMAT: '%Y-%m-%dT%H:%M:%S%z'
+FLASK_OIDC_LOG_LEVEL: 'INFO'
 ```
 
-### Client Secrets File:
+This package relies purely on the `flask-oidc` package. All the configurations variable for flask-oidc
+can be set using the `ENVIRONMENT VARIABLES`
+[Flask-OIDC COnfiguration](https://flask-oidc.readthedocs.io/en/latest/#settings-reference)
+
+Following are some of the examples: 
+```python
+# Path of your configuration file. (default value assumes you have a `config/client_secrets.json` available.
+# Below is the sample file you can use
+OIDC_CLIENT_SECRETS: 'config/client_secrets.json'
+
+OVERWRITE_REDIRECT_URI: False
+
+OIDC_CALLBACK_ROUTE: '/oidc_callback'
+```
+
+Similar to Flask-OIDC, you can also set the config variables specific to [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/config/) using the same key as the environment variables.
+```python
+# Details about this below in the "Session Management" section.
+SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
+```
+
+And same goes for [Flask-Session](https://flask-session.readthedocs.io/en/latest/#configuration).
+```python
+# Specifies which type of session interface to use.
+SESSION_TYPE: 'sqlite:///sessions.db'
+```
+
+
+#### (SAMPLE) Client Secrets File:
 The client secrets file looks like this:
 
 `client_secrets.json`
