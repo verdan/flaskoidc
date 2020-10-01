@@ -71,7 +71,7 @@ SESSION_TYPE: 'sqlite:///sessions.db'
 ```
 
 
-#### (SAMPLE) Client Secrets File:
+#### (SAMPLE) Client Secrets Files:
 The client secrets file looks like this:
 
 `client_secrets.json`
@@ -84,10 +84,26 @@ The client secrets file looks like this:
         "client_id": "my-application-id",
         "client_secret": "my-application-secret-in-keycloak",
         "userinfo_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/userinfo",
-        "token_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/token",
-        "token_introspection_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/token/introspect"
+        "token_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/token",         
+        "token_introspection_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/token/introspect",
     }
 }
+```
+
+`client_secrets_google.json`
+```json
+{
+    "web": {
+        "issuer": "https://accounts.google.com",
+        "auth_uri": "https://accounts.google.com/o/oauth2/v2/auth",
+        "client_id": "my-application-id-in-google",
+        "client_secret": "my-application-secret-in-google",
+        "userinfo_uri": "https://openidconnect.googleapis.com/v1/userinfo",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "token_introspection_uri": "https://oauth2.googleapis.com/tokeninfo"
+    }
+}
+
 ```
 
 ## Session Management

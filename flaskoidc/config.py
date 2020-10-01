@@ -6,10 +6,18 @@ FLASK_SESSION_ATTR_KEY = 'SESSION_'
 EXCEPTIONAL_KEYS = ["OVERWRITE_REDIRECT_URI"]
 
 
+class OIDCProvider:
+    GOOGLE = "GOOGLE"
+    KEYCLOAK = "KEYCLOAK"
+
+
 class BaseConfig(object):
     SECRET_KEY = os.environ.get('FLASK_OIDC_SECRET_KEY', 'base-flask-oidc-secret-key')
     WHITELISTED_ENDPOINTS = os.environ.get('FLASK_OIDC_WHITELISTED_ENDPOINTS',
                                            "status,healthcheck,health")
+
+    # Not being used anywhere
+    OIDC_PROVIDER = os.environ.get('FLASK_OIDC_OIDC_PROVIDER', OIDCProvider.KEYCLOAK)
 
     # Logging Settings
     LOG_FORMAT = '%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s.%(funcName)s:%(lineno)d (%(process)d:' \

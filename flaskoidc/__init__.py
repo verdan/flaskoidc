@@ -1,19 +1,58 @@
 import logging
+from base64 import b64encode
+from six.moves.urllib.parse import urlencode
 
-from flask import redirect, Flask, request, g
+import httplib2
+from flask import redirect, Flask, request, g, current_app
 from flask.helpers import get_env, get_debug_flag
-from flask_oidc import OpenIDConnect
+from flask_oidc import OpenIDConnect, _json_loads
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 
-from flaskoidc.config import BaseConfig
+from flaskoidc.config import BaseConfig, OIDCProvider
 from flaskoidc.store import SessionCredentialStore
 
 LOGGER = logging.getLogger(__name__)
 
 
-class FlaskOIDC(Flask):
+class CustomOpenIDConnect(OpenIDConnect):
+    def _get_token_info(self, token):
+        # TODO: This should be fixed in the main flask-oidc repo instead.
+        # TODO: But since it is not being maintained anymore, we did it here.
+        # We hardcode to use client_secret_post, because that's what the Google
+        # oauth2client library defaults to
+        request = {'token': token}
+        headers = {'Content-type': 'application/x-www-form-urlencoded'}
 
+        hint = current_app.config['OIDC_TOKEN_TYPE_HINT']
+        if hint != 'none':
+            request['token_type_hint'] = hint
+            request[hint] = token
+
+        auth_method = current_app.config['OIDC_INTROSPECTION_AUTH_METHOD']
+        if auth_method == 'client_secret_basic':
+            basic_auth_string = '%s:%s' % (self.client_secrets['client_id'], self.client_secrets['client_secret'])
+            basic_auth_bytes = bytearray(basic_auth_string, 'utf-8')
+            headers['Authorization'] = 'Basic %s' % b64encode(basic_auth_bytes)
+        elif auth_method == 'bearer':
+            headers['Authorization'] = 'Bearer %s' % token
+        elif auth_method == 'client_secret_post':
+            request['client_id'] = self.client_secrets['client_id']
+            request['client_secret'] = self.client_secrets['client_secret']
+
+        resp, content = httplib2.Http().request(self.client_secrets['token_introspection_uri'],
+                                                'POST', urlencode(request),
+                                                headers=headers)
+        # TODO: Cache this reply
+        token_info = _json_loads(content)
+        if not token_info.get("active"):
+            if token_info.get("expires_in") and int(token_info.get("expires_in")) > 1:
+                token_info["active"] = True
+
+        return token_info
+
+
+class FlaskOIDC(Flask):
     def _before_request(self):
         # ToDo: Need to refactor and divide this method in functions.
         # Whitelisted Endpoints i.e., health checks and status url
@@ -68,7 +107,7 @@ class FlaskOIDC(Flask):
         _session.app.session_interface.db.create_all()
 
         # Initiate OpenIDConnect using the SQLAlchemy backed session store
-        _oidc = OpenIDConnect(self, SessionCredentialStore())
+        _oidc = CustomOpenIDConnect(self, SessionCredentialStore())
         self.oidc = _oidc
 
         # Register the before request function that will make sure each
