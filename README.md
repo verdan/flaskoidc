@@ -67,7 +67,7 @@ SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
 And same goes for [Flask-Session](https://flask-session.readthedocs.io/en/latest/#configuration).
 ```python
 # Specifies which type of session interface to use.
-SESSION_TYPE: 'sqlite:///sessions.db'
+SESSION_TYPE: 'sqlalchemy' (Options are: null, redis, memcached, filesystem, mongodb)
 ```
 
 
