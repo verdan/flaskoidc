@@ -5,7 +5,7 @@ from six.moves.urllib.parse import urlencode
 import httplib2
 from flask import redirect, Flask, request, g, current_app
 from flask.helpers import get_env, get_debug_flag
-from flask_oidc import OpenIDConnect, _json_loads
+from flask_oidc_ext import OpenIDConnect, _json_loads
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 
