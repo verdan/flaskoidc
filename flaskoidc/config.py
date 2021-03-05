@@ -4,6 +4,7 @@ OIDC_ATTR_KEY = 'OIDC_'
 SQLALCHEMY_ATTR_KEY = 'SQLALCHEMY_'
 FLASK_SESSION_ATTR_KEY = 'SESSION_'
 EXCEPTIONAL_KEYS = ["OVERWRITE_REDIRECT_URI"]
+LIST_KEYS = ["OIDC_SCOPES"]
 
 
 class OIDCProvider:
@@ -38,6 +39,8 @@ class BaseConfig(object):
     SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI", 'sqlite:///sessions.db')
 
     for key, value in dict(os.environ).items():
+        if key in LIST_KEYS:
+            value = [item.strip() for item in value.split(',')]
         if (
                 key.startswith(OIDC_ATTR_KEY) or
                 key.startswith(FLASK_SESSION_ATTR_KEY) or

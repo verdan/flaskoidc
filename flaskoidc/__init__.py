@@ -16,6 +16,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CustomOpenIDConnect(OpenIDConnect):
+    FLASKOIDC_ACCESS_TOKEN = None
+
     def _get_token_info(self, token):
         # TODO: This should be fixed in the main flask-oidc repo instead.
         # TODO: But since it is not being maintained anymore, we did it here.
@@ -77,6 +79,7 @@ class FlaskOIDC(Flask):
             validity = self.oidc.validate_token(token)
             # This check True is required to make sure the validity is checked
             if validity is True:
+                self.oidc.FLASKOIDC_ACCESS_TOKEN = token
                 return
 
         # If not accepting a request, verify if the user is logged in

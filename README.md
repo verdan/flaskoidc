@@ -56,6 +56,9 @@ OIDC_CLIENT_SECRETS: 'config/client_secrets.json'
 OVERWRITE_REDIRECT_URI: False
 
 OIDC_CALLBACK_ROUTE: '/oidc_callback'
+
+# And to modify the scopes using environment variable, you need to provide comma-separated items in a string. 
+OIDC_SCOPES: 'openid,email,profile'
 ```
 
 Similar to Flask-OIDC, you can also set the config variables specific to [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/config/) using the same key as the environment variables.
