@@ -1,4 +1,4 @@
 Flask==1.0.2
-flask-oidc==1.4.0
+flask-oidc-ext==1.4.3
 Flask-Session==0.3.2
 Flask-SQLAlchemy==2.4.4
