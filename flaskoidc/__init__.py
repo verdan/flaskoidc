@@ -12,8 +12,14 @@ from flask_sqlalchemy import SQLAlchemy
 from flaskoidc.config import BaseConfig, OIDCProvider
 from flaskoidc.store import SessionCredentialStore
 
+# Logger setup
 LOGGER = logging.getLogger(__name__)
-
+LOGGER.setLevel(BaseConfig.LOG_LEVEL)
+log_handler = logging.StreamHandler()
+log_handler.setLevel(BaseConfig.LOG_LEVEL)
+formatter = logging.Formatter(BaseConfig.LOG_FORMAT, BaseConfig.LOG_DATE_FORMAT)
+log_handler.setFormatter(formatter)
+LOGGER.addHandler(log_handler)
 
 class CustomOpenIDConnect(OpenIDConnect):
     FLASKOIDC_ACCESS_TOKEN = None
