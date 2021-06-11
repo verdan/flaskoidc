@@ -2,16 +2,18 @@ import os
 
 from setuptools import setup, find_packages
 
-requirements_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'requirements.txt')
-with open(requirements_path) as requirements_file:
-    requirements = requirements_file.readlines()
+requirements = [
+    'Authlib==0.15.4',
+    'requests==2.25.1',
+    'Flask-SQLAlchemy==2.5.1'
+]
 
-__version__ = '0.2.3'
+__version__ = '1.0.0'
 
 setup(
     name='flaskoidc',
     version=__version__,
-    description='Flask wrapper with pre-configured OIDC support',
+    description='Flask wrapper with pre-configured OAuth and OIDC support',
     url='https://github.com/verdan/flaskoidc.git',
     author='Verdan Mahmood',
     author_email='verdan.mahmood@gmail.com',
