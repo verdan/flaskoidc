@@ -7,8 +7,7 @@ from flask import redirect, Flask, request, session, abort
 from flask.helpers import get_env, get_debug_flag, url_for
 from flask_sqlalchemy import SQLAlchemy
 
-from flaskoidc.config import BaseConfig, OIDCProvider
-
+from flaskoidc.config import BaseConfig, _CONFIGS
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,23 +39,32 @@ class FlaskOIDC(Flask):
 
         if token:
             token = json.loads(token)
+            if token.get("expires_at") <= _current_time:
+                LOGGER.exception("Token coming in request is expired")
+                abort(401)
+            else:
+                return
 
         try:
-            token = token or self.auth_client.token
-            if token.get("expires_at") <= _current_time:
-                LOGGER.info("Token Expired")
-                raise
+            self.auth_client.token
         except Exception as ex:
-            # LOGGER.info(ex)
-            # abort(401)
-            LOGGER.exception("User not logged in, redirect to auth")
+            LOGGER.exception("User not logged in, redirecting to auth")
+            LOGGER.exception(ex)
             return redirect(url_for('logout', _external=True))
 
     def __init__(self, *args, **kwargs):
         super(FlaskOIDC, self).__init__(*args, **kwargs)
-        self.config['PROPOGATE_EXCEPTIONS'] = True
 
         self.db = SQLAlchemy(self)
+        _provider = self.config.get('OIDC_PROVIDER').lower()
+
+        if _provider not in _CONFIGS.keys():
+            LOGGER.info(f"""
+            [flaskoidc Notice] I have not verified the OIDC Provider that you have 
+            selected i.e., "{_provider}" with this package yet. 
+            If you encounter any issue while using this library with "{_provider}",
+            please do not hesitate to create an issue on Github. (https://github.com/verdan/flaskoidc)
+            """)
 
         with self.app_context():
             from flaskoidc.models import OAuth2Token, _fetch_token, _update_token
@@ -69,22 +77,23 @@ class FlaskOIDC(Flask):
             )
 
             self.auth_client = oauth.register(
-                name=self.config.get('OIDC_PROVIDER'),
+                name=_provider,
                 server_metadata_url=self.config.get('CONFIG_URL'),
                 client_kwargs={
-                    'scope': self.config.get('OIDC_SCOPES')
-                }
+                    'scope': self.config.get('OIDC_SCOPES'),
+                },
+                **_CONFIGS.get(_provider) if _CONFIGS.get(_provider) else {}
             )
 
         # Register the before request function that will make sure each
         # request is authenticated before processing
         self.before_request(self._before_request)
 
-        # FixMe: This does not work when working with FlaskRestful.
-        @self.errorhandler(401)
-        def custom_401(error):
-            LOGGER.exception("User not logged in, redirect to auth")
+        def unauthorized_redirect(err):
+            LOGGER.info("Calling the 401 Error Handler. 'unauthorized_redirect'")
             return redirect(url_for('logout', _external=True))
+
+        self.register_error_handler(401, unauthorized_redirect)
 
         @self.route('/login')
         def login():
@@ -98,7 +107,7 @@ class FlaskOIDC(Flask):
                 user = self.auth_client.parse_id_token(token)
                 user_id = user.get(self.config.get('USER_ID_FIELD'))
                 token.pop("id_token")
-                OAuth2Token.save(name=self.config.get('OIDC_PROVIDER'), user_id=user_id, **token)
+                OAuth2Token.save(name=_provider, user_id=user_id, **token)
                 session["user"] = user
                 session["user"]["__id"] = user_id
                 return redirect('/')
@@ -108,8 +117,10 @@ class FlaskOIDC(Flask):
 
         @self.route('/logout')
         def logout():
+            # ToDo: Think of if we should delete the session entity or not
+            # if session.get("user"):
+            #     OAuth2Token.delete(name=_provider, user_id=session["user"]["__id"])
             session.pop('user', None)
-            # session.pop('token', None)
             return redirect(url_for('login'))
 
     def make_config(self, instance_relative=False):

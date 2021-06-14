@@ -2,10 +2,10 @@ import logging
 
 import time
 from authlib.oidc.core.errors import LoginRequiredError
-from flask import current_app as app, redirect, url_for, session
+from flask import current_app as app, session
 from sqlalchemy import Column, Integer, String
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(f"flaskoidc.{__name__}")
 
 
 class OAuth2Token(app.db.Model):
@@ -45,6 +45,11 @@ class OAuth2Token(app.db.Model):
         return OAuth2Token.query.filter_by(**kwargs).first()
 
     @staticmethod
+    def delete(**kwargs):
+        OAuth2Token.query.filter_by(**kwargs).delete()
+        app.db.session.commit()
+
+    @staticmethod
     def get_active(name, user_id, int_time):
         return OAuth2Token.query.filter(OAuth2Token.name == name,
                                         OAuth2Token.user_id == user_id,
@@ -55,34 +60,39 @@ class OAuth2Token(app.db.Model):
     def all():
         return OAuth2Token.query.all()
 
+    @staticmethod
+    def update_tokens(token, refresh_token=None, access_token=None):
+        name = app.config.get('OIDC_PROVIDER')
+        if refresh_token:
+            item = OAuth2Token.get(name=name, refresh_token=refresh_token)
+        elif access_token:
+            item = OAuth2Token.get(name=name, access_token=access_token)
+        else:
+            return
 
-def _update_token(sender, name, token, refresh_token=None, access_token=None):
-    LOGGER.exception("NOT AN EXCEPTION. JUST VERBOSE. on_token_update")
-    LOGGER.debug(f"Name: {name}, RefreshToken: {refresh_token}, AccessToken: {access_token}")
-    LOGGER.debug(f"Sender: {sender}")
-    if refresh_token:
-        item = OAuth2Token.where(name=name, refresh_token=refresh_token).first()
-    elif access_token:
-        item = OAuth2Token.where(name=name, access_token=access_token).first()
-    else:
-        return
+        item.access_token = token['access_token']
+        item.refresh_token = token.get('refresh_token')
+        item.expires_at = token['expires_at']
+        app.db.session.commit()
 
-    item.update(
-        access_token=token['access_token'],
-        refresh_token=token.get('refresh_token'),
-        expires_at=token['expires_at']
-    )
+
+def _update_token(token, refresh_token=None, access_token=None):
+    LOGGER.error(f"Calling _update_token(token={token}...")
+    try:
+        OAuth2Token.update_tokens(token, refresh_token=refresh_token, access_token=access_token)
+    except Exception as ex:
+        LOGGER.exception(f"Exception occurred _update_token(token={token}...")
 
 
 def _fetch_token(name):
+    LOGGER.error(f"Calling _fetch_token(name={name})...")
     try:
         _current_time = round(time.time())
-        LOGGER.debug(f"Calling _fetch_token(name={name})")
         token = OAuth2Token.get_active(name=name,
                                        user_id=session["user"]["__id"],
                                        int_time=_current_time)
         if not token:
-            raise Exception("_fetch_token: No Token Found or Expired")
+            raise LoginRequiredError("_fetch_token: No Token Found or Expired")
         return token.to_token()
     except Exception as ex:
         LOGGER.error(ex)
