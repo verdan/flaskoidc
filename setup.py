@@ -3,7 +3,7 @@ from os import path
 from setuptools import setup, find_packages
 
 requirements = [
-    'Flask 2.0.1',
+    'Flask>=1.0.2',
     'Authlib==0.15.4',
     'requests==2.25.1',
     'Flask-SQLAlchemy==2.5.1'
@@ -14,7 +14,7 @@ this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-__version__ = '1.0.0'
+__version__ = '0.3.0'
 
 setup(
     name='flaskoidc',
