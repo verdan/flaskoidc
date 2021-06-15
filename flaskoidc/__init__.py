@@ -43,7 +43,14 @@ class FlaskOIDC(Flask):
                 LOGGER.exception("Token coming in request is expired")
                 abort(401)
             else:
-                return
+                LOGGER.debug("Token in request is not expired")
+                try:
+                    assert self.auth_client.token
+                except Exception as ex:
+                    LOGGER.debug("Token not found in the database, use the one in the request")
+                    # Since this is a request coming from other service,
+                    # we will need to assign the token.
+                    self.auth_client.token = token
 
         try:
             self.auth_client.token

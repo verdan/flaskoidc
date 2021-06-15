@@ -1,19 +1,27 @@
-import os
+from os import path
 
 from setuptools import setup, find_packages
 
 requirements = [
+    'Flask 2.0.1',
     'Authlib==0.15.4',
     'requests==2.25.1',
     'Flask-SQLAlchemy==2.5.1'
 ]
 
-__version__ = '1.0.0'
+# read the contents of your README file
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
+__version__ = '0.3.0'
 
 setup(
     name='flaskoidc',
     version=__version__,
-    description='Flask wrapper with pre-configured OAuth and OIDC support',
+    description='Flask wrapper with pre-configured OAuth2 and OIDC support',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/verdan/flaskoidc.git',
     author='Verdan Mahmood',
     author_email='verdan.mahmood@gmail.com',
