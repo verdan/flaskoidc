@@ -1,8 +1,18 @@
+**(This version is still in BETA. Please consider using `v0.2.3` for a stable version)**
 # FlaskOIDC
 [![PyPI version](https://badge.fury.io/py/flaskoidc.svg)](https://badge.fury.io/py/flaskoidc)
 [![License](http://img.shields.io/:license-Apache%202-blue.svg)](LICENSE)
 
-A wrapper of Flask with pre-configured OIDC support. Ideal for microservices architecture, each request will be authenticated using Flask's `before_request` middleware. Necassary endpoints can be whitelisted using an environment variable `FLASK_OIDC_WHITELISTED_ENDPOINTS`. 
+This package relies purely on the `Authlib` package. [Authlib](https://docs.authlib.org/en/latest/)
+
+A wrapper of Flask with pre-configured OIDC support. Ideal for microservices architecture, each request will be authenticated using Flask's `before_request` middleware. 
+Necassary endpoints can be whitelisted using an environment variable `FLASK_OIDC_WHITELISTED_ENDPOINTS`. 
+
+## Installation:
+```bash
+pip3 install flaskoidc
+```
+
 
 ## Usage:
 
@@ -30,94 +40,75 @@ app.config.from_object(CustomConfig)
 
 ```
 
-Following environment variables along with their default values are available for `flaskoidc`. 
+Following `ENVIRONMENT VARIABLES` MUST be set to get the OIDC working.
+
+#### FLASK_OIDC_PROVIDER_NAME 
+_(default: 'google')_
+
+The name of the OIDC provider, like `google`, `okta`, `keycloak` etc. I have verified this package only for
+google, okta and keycloak. Please make sure to open a new issue if any of your OIDC provider is not working.
+
+#### FLASK_OIDC_SCOPES 
+_(default: 'openid email profile')_
+
+Scopes required to make your client works with the OIDC provider, separated by a space. 
+
+- OKTA: make sure to add `offline_access` in your scopes in order to get the refresh_token.
+
+#### FLASK_OIDC_USER_ID_FIELD
+_(default: 'email')_
+
+Different OIDC providers have different id field for the users. Make sure to adjust this according to what 
+your provider returns in the user profile i.e., `id_token`.
+
+#### FLASK_OIDC_CLIENT_ID
+_(default: '')_
+
+Client ID that you get once you create a new application on your OIDC provider.
+
+#### FLASK_OIDC_CLIENT_SECRET
+_(default: '')_
+
+Client Secret that you get once you create a new application on your OIDC provider.
+
+#### FLASK_OIDC_REDIRECT_URI
+_(default: '/auth')_
+
+This is the endpoint that your OIDC provider hits to authenticate against your request. 
+This is what you set as one of your REDIRECT URI in the OIDC provider client's settings.  
+
+#### FLASK_OIDC_CONFIG_URL
+_(default: '')_
+
+To simplify OIDC implementations and increase flexibility, OpenID Connect allows the use of a "Discovery document," a JSON document found at a well-known location containing key-value pairs which provide details about the OpenID Connect provider's configuration, including the URIs of the authorization, token, revocation, userinfo, and public-keys endpoints.
+
+Discovery Documents may be retrieved from:
+- `Google`: https://accounts.google.com/.well-known/openid-configuration
+- `OKTA`
+  - https://[YOUR_OKTA_DOMAIN]/.well-known/openid-configuration
+  - https://[YOUR_OKTA_DOMAIN]/oauth2/[AUTH_SERVER_ID]/.well-known/openid-configuration
+- `Auth0`: https://[YOUR_DOMAIN]/.well-known/openid-configuration
+- `Keycloak`: http://[KEYCLOAK_HOST]:[KEYCLOAK_PORT]/auth/realms/[REALM]/.well-known/openid-configuration
+
+
+A few other environment variables along with their default values are. 
 
 ```python
 # Flask `SECRET_KEY` config value
-FLASK_OIDC_SECRET_KEY: 'base-flask-oidc-secret-key'
+FLASK_OIDC_SECRET_KEY: '!-flask-oidc-secret-key'
 
 # Comma separated string of URLs which should be exposed without authentication, else all request will be authenticated.
 FLASK_OIDC_WHITELISTED_ENDPOINTS: "status,healthcheck,health"
-
-FLASK_OIDC_LOG_DATE_FORMAT: '%Y-%m-%dT%H:%M:%S%z'
-FLASK_OIDC_LOG_LEVEL: 'INFO'
 ```
 
-This package relies purely on the `flask-oidc` package. All the configurations variable for flask-oidc
-can be set using the `ENVIRONMENT VARIABLES`
-[Flask-OIDC COnfiguration](https://flask-oidc.readthedocs.io/en/latest/#settings-reference)
-
-Following are some of the examples: 
-```python
-# Path of your configuration file. (default value assumes you have a `config/client_secrets.json` available.
-# Below is the sample file you can use
-OIDC_CLIENT_SECRETS: 'config/client_secrets.json'
-
-OVERWRITE_REDIRECT_URI: False
-
-OIDC_CALLBACK_ROUTE: '/oidc_callback'
-
-# And to modify the scopes using environment variable, you need to provide comma-separated items in a string. 
-OIDC_SCOPES: 'openid,email,profile'
-```
-
-Similar to Flask-OIDC, you can also set the config variables specific to [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/config/) using the same key as the environment variables.
+You can also set the config variables specific to [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/config/) using the same key as the environment variables.
 ```python
 # Details about this below in the "Session Management" section.
 SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
 ```
 
-And same goes for [Flask-Session](https://flask-session.readthedocs.io/en/latest/#configuration).
-```python
-# Specifies which type of session interface to use.
-SESSION_TYPE: 'sqlalchemy' (Options are: null, redis, memcached, filesystem, mongodb)
-```
-
-
-#### (SAMPLE) Client Secrets Files:
-The client secrets file looks like this:
-
-`client_secrets.json`
-```json
-{
-    "web": {
-        "issuer": "http://localhost:8080/auth/realms/master",
-        "issuer_admin": "http://localhost:8080/auth/admin/realms/master",
-        "auth_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/auth",
-        "client_id": "my-application-id",
-        "client_secret": "my-application-secret-in-keycloak",
-        "userinfo_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/userinfo",
-        "token_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/token",         
-        "token_introspection_uri": "http://localhost:8080/auth/realms/master/protocol/openid-connect/token/introspect",
-    }
-}
-```
-
-`client_secrets_google.json`
-```json
-{
-    "web": {
-        "issuer": "https://accounts.google.com",
-        "auth_uri": "https://accounts.google.com/o/oauth2/v2/auth",
-        "client_id": "my-application-id-in-google",
-        "client_secret": "my-application-secret-in-google",
-        "userinfo_uri": "https://openidconnect.googleapis.com/v1/userinfo",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "token_introspection_uri": "https://oauth2.googleapis.com/tokeninfo"
-    }
-}
-
-```
-
-## Session Management
-This extension uses SQLAlchemy to hold the sessions of the users. Flask OIDC saves the sessions in memory by default 
-which is very vulnerable. This adds the support of custom session store. 
-By default the path of database is `sqlite:///sessions.db` and can be configured using the environment variable `SQLALCHEMY_DATABASE_URI`
-
-
-## ToDo
-- Add exmaple application
-- Configurable token validation (local vs server side on each request)
-- Token Refresh
-- Add logging
+## Known Issues:
+- Need to make sure it still works with the clients_secrets.json file or via env variables for each endpoint.
+- `refresh_token` is not yet working. I am still trying to figure out how to do this using Authlib. 
+- You may enter problems when installing cryptography, check its [official document](https://cryptography.io/en/latest/installation/)
 

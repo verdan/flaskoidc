@@ -1,69 +1,31 @@
+import json
 import logging
-from base64 import b64encode
-from six.moves.urllib.parse import urlencode
 
-import httplib2
-from flask import redirect, Flask, request, g, current_app
-from flask.helpers import get_env, get_debug_flag
-from flask_oidc import OpenIDConnect, _json_loads
-from flask_session import Session
+import time
+from authlib.integrations.flask_client import OAuth
+from flask import redirect, Flask, request, session, abort
+from flask.helpers import get_env, get_debug_flag, url_for
 from flask_sqlalchemy import SQLAlchemy
 
-from flaskoidc.config import BaseConfig, OIDCProvider
-from flaskoidc.store import SessionCredentialStore
+from flaskoidc.config import BaseConfig, _CONFIGS
 
 LOGGER = logging.getLogger(__name__)
 
 
-class CustomOpenIDConnect(OpenIDConnect):
-    FLASKOIDC_ACCESS_TOKEN = None
-
-    def _get_token_info(self, token):
-        # TODO: This should be fixed in the main flask-oidc repo instead.
-        # TODO: But since it is not being maintained anymore, we did it here.
-        # We hardcode to use client_secret_post, because that's what the Google
-        # oauth2client library defaults to
-        request = {'token': token}
-        headers = {'Content-type': 'application/x-www-form-urlencoded'}
-
-        hint = current_app.config['OIDC_TOKEN_TYPE_HINT']
-        if hint != 'none':
-            request['token_type_hint'] = hint
-            request[hint] = token
-
-        auth_method = current_app.config['OIDC_INTROSPECTION_AUTH_METHOD']
-        if auth_method == 'client_secret_basic':
-            basic_auth_string = '%s:%s' % (self.client_secrets['client_id'], self.client_secrets['client_secret'])
-            basic_auth_bytes = bytearray(basic_auth_string, 'utf-8')
-            headers['Authorization'] = 'Basic %s' % b64encode(basic_auth_bytes)
-        elif auth_method == 'bearer':
-            headers['Authorization'] = 'Bearer %s' % token
-        elif auth_method == 'client_secret_post':
-            request['client_id'] = self.client_secrets['client_id']
-            request['client_secret'] = self.client_secrets['client_secret']
-
-        resp, content = httplib2.Http().request(self.client_secrets['token_introspection_uri'],
-                                                'POST', urlencode(request),
-                                                headers=headers)
-        # TODO: Cache this reply
-        token_info = _json_loads(content)
-        if not token_info.get("active"):
-            if token_info.get("expires_in") and int(token_info.get("expires_in")) > 1:
-                token_info["active"] = True
-
-        return token_info
-
-
 class FlaskOIDC(Flask):
     def _before_request(self):
-        # ToDo: Need to refactor and divide this method in functions.
-        # Whitelisted Endpoints i.e., health checks and status url
-        LOGGER.debug(f"Request Path: {request.path}")
-        LOGGER.debug(f"Request Endpoint: {request.endpoint}")
-        LOGGER.debug(f"Whitelisted Endpoint: {BaseConfig.WHITELISTED_ENDPOINTS}")
+        from flaskoidc.models import OAuth2Token
 
-        if request.path.strip("/") in BaseConfig.WHITELISTED_ENDPOINTS.split(",") or \
-                request.endpoint in BaseConfig.WHITELISTED_ENDPOINTS.split(","):
+        _current_time = round(time.time())
+        # Whitelisted Endpoints i.e., health checks and status url
+        whitelisted_endpoints = self.config.get('WHITELISTED_ENDPOINTS')
+        LOGGER.debug(f"Whitelisted Endpoint: {whitelisted_endpoints}")
+
+        # Add auth endpoints to whitelisted endpoint as well, so not to check for token on that
+        whitelisted_endpoints += f",login,logout,{self.config.get('REDIRECT_URI').strip('/')}"
+
+        if request.path.strip("/") in whitelisted_endpoints.split(",") or \
+                request.endpoint in whitelisted_endpoints.split(","):
             return
 
         # If accepting token in the request headers
@@ -76,65 +38,97 @@ class FlaskOIDC(Flask):
             token = request.args['access_token']
 
         if token:
-            validity = self.oidc.validate_token(token)
-            # This check True is required to make sure the validity is checked
-            if validity is True:
-                self.oidc.FLASKOIDC_ACCESS_TOKEN = token
-                return
+            token = json.loads(token)
+            if token.get("expires_at") <= _current_time:
+                LOGGER.exception("Token coming in request is expired")
+                abort(401)
+            else:
+                LOGGER.debug("Token in request is not expired")
+                try:
+                    assert self.auth_client.token
+                except Exception as ex:
+                    LOGGER.debug("Token not found in the database, use the one in the request")
+                    # Since this is a request coming from other service,
+                    # we will need to assign the token.
+                    self.auth_client.token = token
 
-        # If not accepting a request, verify if the user is logged in
-        with self.app_context():
-            try:
-                if self.oidc.user_loggedin:
-                    access_token = self.oidc.get_access_token()
-                    assert access_token
-                    is_valid = self.oidc.validate_token(access_token)
-                    assert is_valid is True
-                return self.oidc.authenticate_or_redirect()
-            except (AssertionError, AttributeError):
-                # In case the session is forced logout from keycloak but still in
-                # the cookie, remove from cookie and try to login again
-                self.oidc.logout()
-                return self.oidc.authenticate_or_redirect()
+        try:
+            self.auth_client.token
+        except Exception as ex:
+            LOGGER.exception("User not logged in, redirecting to auth")
+            LOGGER.exception(ex)
+            return redirect(url_for('logout', _external=True))
 
     def __init__(self, *args, **kwargs):
         super(FlaskOIDC, self).__init__(*args, **kwargs)
 
-        # Setup Session Database
-        _sql_db = SQLAlchemy(self)
-        self.config["SESSION_SQLALCHEMY"] = _sql_db
+        self.db = SQLAlchemy(self)
+        _provider = self.config.get('OIDC_PROVIDER').lower()
 
-        # Setup Session Store, that will hold the session information
-        # in database. OIDC by default keep the sessions in memory
-        _session = Session(self)
-        _session.app.session_interface.db.create_all()
+        if _provider not in _CONFIGS.keys():
+            LOGGER.info(f"""
+            [flaskoidc Notice] I have not verified the OIDC Provider that you have 
+            selected i.e., "{_provider}" with this package yet. 
+            If you encounter any issue while using this library with "{_provider}",
+            please do not hesitate to create an issue on Github. (https://github.com/verdan/flaskoidc)
+            """)
 
-        # Initiate OpenIDConnect using the SQLAlchemy backed session store
-        _oidc = CustomOpenIDConnect(self, SessionCredentialStore())
-        self.oidc = _oidc
+        with self.app_context():
+            from flaskoidc.models import OAuth2Token, _fetch_token, _update_token
+            self.db.create_all()
+
+            oauth = OAuth(
+                self,
+                fetch_token=_fetch_token,
+                update_token=_update_token
+            )
+
+            self.auth_client = oauth.register(
+                name=_provider,
+                server_metadata_url=self.config.get('CONFIG_URL'),
+                client_kwargs={
+                    'scope': self.config.get('OIDC_SCOPES'),
+                },
+                **_CONFIGS.get(_provider) if _CONFIGS.get(_provider) else {}
+            )
 
         # Register the before request function that will make sure each
         # request is authenticated before processing
         self.before_request(self._before_request)
 
+        def unauthorized_redirect(err):
+            LOGGER.info("Calling the 401 Error Handler. 'unauthorized_redirect'")
+            return redirect(url_for('logout', _external=True))
+
+        self.register_error_handler(401, unauthorized_redirect)
+
         @self.route('/login')
         def login():
-            return redirect('/')
+            redirect_uri = url_for('auth', _external=True)
+            return self.auth_client.authorize_redirect(redirect_uri)
+
+        @self.route(self.config.get('REDIRECT_URI'))
+        def auth():
+            try:
+                token = self.auth_client.authorize_access_token()
+                user = self.auth_client.parse_id_token(token)
+                user_id = user.get(self.config.get('USER_ID_FIELD'))
+                token.pop("id_token")
+                OAuth2Token.save(name=_provider, user_id=user_id, **token)
+                session["user"] = user
+                session["user"]["__id"] = user_id
+                return redirect('/')
+            except Exception as ex:
+                LOGGER.exception(ex)
+                raise ex
 
         @self.route('/logout')
         def logout():
-            """
-            The logout function that logs user out from Keycloak.
-            :return: Redirects to the Keycloak login page
-            """
-            _oidc.logout()
-            redirect_url = request.url_root.strip('/')
-            keycloak_issuer = _oidc.client_secrets.get('issuer')
-            keycloak_logout_url = '{}/protocol/openid-connect/logout'. \
-                format(keycloak_issuer)
-
-            return redirect('{}?redirect_uri={}'.format(keycloak_logout_url,
-                                                        redirect_url))
+            # ToDo: Think of if we should delete the session entity or not
+            # if session.get("user"):
+            #     OAuth2Token.delete(name=_provider, user_id=session["user"]["__id"])
+            session.pop('user', None)
+            return redirect(url_for('login'))
 
     def make_config(self, instance_relative=False):
         """
@@ -151,5 +145,7 @@ class FlaskOIDC(Flask):
         # Append all the configurations from the base config class.
         for key, value in BaseConfig.__dict__.items():
             if not key.startswith('__'):
+                if key in ["CLIENT_ID", "CLIENT_SECRET"]:
+                    key = f'{BaseConfig.OIDC_PROVIDER.upper()}_{key}'
                 defaults[key] = value
         return self.config_class(root_path, defaults)
