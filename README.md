@@ -1,4 +1,4 @@
-**(This version is still in BETA. Please consider using `v0.2.3` for a stable version)**
+**(This version is still in BETA, and is available in testpypi only. Please consider using `v0.2.3` for a stable version)**
 # FlaskOIDC
 [![PyPI version](https://badge.fury.io/py/flaskoidc.svg)](https://badge.fury.io/py/flaskoidc)
 [![License](http://img.shields.io/:license-Apache%202-blue.svg)](LICENSE)
