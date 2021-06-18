@@ -15,7 +15,7 @@ class OAuth2Token(app.db.Model):
 
     access_token = Column(String(255), nullable=False)
     expires_in = Column(Integer, default=0)
-    scope = Column(String, default=0)
+    scope = Column(String(255), default=0)
     token_type = Column(String(20))
     refresh_token = Column(String(255))
     expires_at = Column(Integer, default=0)
