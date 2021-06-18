@@ -88,7 +88,7 @@ Discovery Documents may be retrieved from:
   - https://[YOUR_OKTA_DOMAIN]/.well-known/openid-configuration
   - https://[YOUR_OKTA_DOMAIN]/oauth2/[AUTH_SERVER_ID]/.well-known/openid-configuration
 - `Auth0`: https://[YOUR_DOMAIN]/.well-known/openid-configuration
-- `Keycloak`: http://[KEYCLOAK_HOST]:[KEYCLOAK_PORT]/auth/realms/[REALM]/.well-known/openid-configuration
+- `Keycloak: http://[KEYCLOAK_HOST]:[KEYCLOAK_PORT]/auth/realms/[REALM]/.well-known/openid-configuration
 
 
 A few other environment variables along with their default values are. 
@@ -108,7 +108,6 @@ SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
 ```
 
 ## Known Issues:
-- Need to make sure it still works with the clients_secrets.json file or via env variables for each endpoint.
+- Need to make sure it still works with the clients_secrets.json file or via env variables for each endpoint of a custom OIDC provider.
 - `refresh_token` is not yet working. I am still trying to figure out how to do this using Authlib. 
 - You may enter problems when installing cryptography, check its [official document](https://cryptography.io/en/latest/installation/)
-

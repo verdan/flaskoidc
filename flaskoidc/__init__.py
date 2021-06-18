@@ -6,6 +6,7 @@ from authlib.integrations.flask_client import OAuth
 from flask import redirect, Flask, request, session, abort
 from flask.helpers import get_env, get_debug_flag, url_for
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.exceptions import BadRequest
 
 from flaskoidc.config import BaseConfig, _CONFIGS
 
@@ -43,21 +44,20 @@ class FlaskOIDC(Flask):
                 LOGGER.exception("Token coming in request is expired")
                 abort(401)
             else:
-                LOGGER.debug("Token in request is not expired")
+                LOGGER.debug("Token in request is not expired.")
                 try:
                     assert self.auth_client.token
                 except Exception as ex:
                     LOGGER.debug("Token not found in the database, use the one in the request")
                     # Since this is a request coming from other service,
-                    # we will need to assign the token.
+                    # we will need to assign the token, to use in the code further
                     self.auth_client.token = token
-
-        try:
-            self.auth_client.token
-        except Exception as ex:
-            LOGGER.exception("User not logged in, redirecting to auth")
-            LOGGER.exception(ex)
-            return redirect(url_for('logout', _external=True))
+        else:
+            try:
+                self.auth_client.token
+            except Exception as ex:
+                LOGGER.exception("User not logged in, redirecting to auth", exc_info=True)
+                return redirect(url_for('logout', _external=True))
 
     def __init__(self, *args, **kwargs):
         super(FlaskOIDC, self).__init__(*args, **kwargs)
@@ -109,12 +109,21 @@ class FlaskOIDC(Flask):
 
         @self.route(self.config.get('REDIRECT_URI'))
         def auth():
+            _db_keys = ['access_token', 'expires_in', 'scope',
+                        'token_type', 'refresh_token', 'expires_at']
             try:
                 token = self.auth_client.authorize_access_token()
                 user = self.auth_client.parse_id_token(token)
                 user_id = user.get(self.config.get('USER_ID_FIELD'))
-                token.pop("id_token")
-                OAuth2Token.save(name=_provider, user_id=user_id, **token)
+                if not user_id:
+                    raise BadRequest("Make sure to set the proper 'FLASK_OIDC_USER_ID_FIELD' env variable "
+                                     "to match with your OIDC Provider."
+                                     f"'{self.config.get('USER_ID_FIELD')}' is not present in the "
+                                     f"response from OIDC Provider. Available Keys are: ({', '.join(user.keys())})"
+                                     )
+                # Remove unnecessary keys from the token
+                db_token = {_key: token.get(_key) for _key in _db_keys}
+                OAuth2Token.save(name=_provider, user_id=user_id, **db_token)
                 session["user"] = user
                 session["user"]["__id"] = user_id
                 return redirect('/')
