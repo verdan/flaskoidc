@@ -3,21 +3,21 @@ import logging
 import time
 from authlib.oidc.core.errors import LoginRequiredError
 from flask import current_app as app, session
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, TEXT
 
 LOGGER = logging.getLogger(f"flaskoidc.{__name__}")
 
 
 class OAuth2Token(app.db.Model):
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(String(320), nullable=False)
     name = Column(String(20), nullable=False)
 
-    access_token = Column(String(255), nullable=False)
+    access_token = Column(TEXT, nullable=False)
     expires_in = Column(Integer, default=0)
-    scope = Column(String(255), default=0)
+    scope = Column(String(320), default=0)
     token_type = Column(String(20))
-    refresh_token = Column(String(255))
+    refresh_token = Column(TEXT)
     expires_at = Column(Integer, default=0)
 
     def to_token(self):
