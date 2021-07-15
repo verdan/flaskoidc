@@ -103,7 +103,7 @@ FLASK_OIDC_WHITELISTED_ENDPOINTS: "status,healthcheck,health"
 You can also set the config variables specific to [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/config/) using the same key as the environment variables.
 ```python
 # Details about this below in the "Session Management" section.
-SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
+FLASK_OIDC_SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
 ```
 
 ## Known Issues:
