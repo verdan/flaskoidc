@@ -113,7 +113,9 @@ class FlaskOIDC(Flask):
                         'token_type', 'refresh_token', 'expires_at']
             try:
                 token = self.auth_client.authorize_access_token()
+                LOGGER.debug(f"Token Info: {token}")
                 user = self.auth_client.parse_id_token(token)
+                LOGGER.debug(f"User Info: {user}")
                 user_id = user.get(self.config.get('USER_ID_FIELD'))
                 if not user_id:
                     raise BadRequest("Make sure to set the proper 'FLASK_OIDC_USER_ID_FIELD' env variable "
