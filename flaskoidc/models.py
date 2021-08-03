@@ -77,23 +77,24 @@ class OAuth2Token(app.db.Model):
 
 
 def _update_token(token, refresh_token=None, access_token=None):
-    LOGGER.error(f"Calling _update_token(token={token}...")
+    LOGGER.debug(f"Calling _update_token(token={token}...")
     try:
         OAuth2Token.update_tokens(token, refresh_token=refresh_token, access_token=access_token)
-    except Exception as ex:
-        LOGGER.exception(f"Exception occurred _update_token(token={token}...")
+    except Exception:
+        LOGGER.exception(f"Exception occurred _update_token(token={token}...", exc_info=True)
 
 
 def _fetch_token(name):
-    LOGGER.error(f"Calling _fetch_token(name={name})...")
     try:
+        user_id = session["user"]["__id"]
+        LOGGER.debug(f"Calling _fetch_token(name={name},user_id={user_id})...")
         _current_time = round(time.time())
         token = OAuth2Token.get_active(name=name,
-                                       user_id=session["user"]["__id"],
+                                       user_id=user_id,
                                        int_time=_current_time)
         if not token:
             raise LoginRequiredError("_fetch_token: No Token Found or Expired")
         return token.to_token()
-    except Exception as ex:
-        LOGGER.error(ex)
+    except Exception:
+        LOGGER.error("Unexpected Error", exc_info=True)
         raise LoginRequiredError
