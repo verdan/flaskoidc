@@ -5,6 +5,7 @@ class OIDC_PROVIDERS:
     GOOGLE = 'google'
     OKTA = 'okta'
     KEYCLOAK = 'keycloak'
+    CUSTOM = 'custom'
 
 
 # All the custom configurations required for an OIDC provider to work with Authlib
@@ -21,6 +22,9 @@ _CONFIGS = {
     },
     OIDC_PROVIDERS.KEYCLOAK: {
 
+    },
+    OIDC_PROVIDERS.CUSTOM: {
+
     }
 }
 
@@ -31,6 +35,13 @@ class BaseConfig(object):
                                            "status,healthcheck,health")
 
     OIDC_PROVIDER = os.environ.get('FLASK_OIDC_PROVIDER_NAME', 'google')
+    OIDC_PROVIDER_PARAMETERS_FILE = os.environ.get('FLASK_OIDC_PROVIDER_ADDITIONAL_PARAMETERS_FILE_PATH', None)
+    if OIDC_PROVIDER_PARAMETERS_FILE is not None:
+        import json
+        with open(OIDC_PROVIDER_PARAMETERS_FILE) as parameters_file:
+            parameters = json.load(parameters_file)
+            _CONFIGS[OIDC_PROVIDER] = parameters
+
     OIDC_SCOPES = os.environ.get('FLASK_OIDC_SCOPES', 'openid email profile')
     USER_ID_FIELD = os.environ.get('FLASK_OIDC_USER_ID_FIELD', 'email')
     CLIENT_ID = os.environ.get('FLASK_OIDC_CLIENT_ID', '')
