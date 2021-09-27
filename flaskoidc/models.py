@@ -51,10 +51,11 @@ class OAuth2Token(app.db.Model):
 
     @staticmethod
     def get_active(name, user_id, int_time):
-        return OAuth2Token.query.filter(OAuth2Token.name == name,
-                                        OAuth2Token.user_id == user_id,
-                                        OAuth2Token.expires_at >= int_time
-                                        ).first()
+        return OAuth2Token.query.filter(
+            OAuth2Token.name == name,
+            OAuth2Token.user_id == user_id,
+            OAuth2Token.expires_at >= int_time,
+        ).first()
 
     @staticmethod
     def all():
@@ -62,7 +63,7 @@ class OAuth2Token(app.db.Model):
 
     @staticmethod
     def update_tokens(token, refresh_token=None, access_token=None):
-        name = app.config.get('OIDC_PROVIDER')
+        name = app.config.get("OIDC_PROVIDER")
         if refresh_token:
             item = OAuth2Token.get(name=name, refresh_token=refresh_token)
         elif access_token:
@@ -70,18 +71,22 @@ class OAuth2Token(app.db.Model):
         else:
             return
 
-        item.access_token = token['access_token']
-        item.refresh_token = token.get('refresh_token')
-        item.expires_at = token['expires_at']
+        item.access_token = token["access_token"]
+        item.refresh_token = token.get("refresh_token")
+        item.expires_at = token["expires_at"]
         app.db.session.commit()
 
 
 def _update_token(token, refresh_token=None, access_token=None):
     LOGGER.debug(f"Calling _update_token(token={token}...")
     try:
-        OAuth2Token.update_tokens(token, refresh_token=refresh_token, access_token=access_token)
+        OAuth2Token.update_tokens(
+            token, refresh_token=refresh_token, access_token=access_token
+        )
     except Exception:
-        LOGGER.exception(f"Exception occurred _update_token(token={token}...", exc_info=True)
+        LOGGER.exception(
+            f"Exception occurred _update_token(token={token}...", exc_info=True
+        )
 
 
 def _fetch_token(name):
@@ -89,9 +94,9 @@ def _fetch_token(name):
         user_id = session["user"]["__id"]
         LOGGER.debug(f"Calling _fetch_token(name={name},user_id={user_id})...")
         _current_time = round(time.time())
-        token = OAuth2Token.get_active(name=name,
-                                       user_id=user_id,
-                                       int_time=_current_time)
+        token = OAuth2Token.get_active(
+            name=name, user_id=user_id, int_time=_current_time
+        )
         if not token:
             raise LoginRequiredError("_fetch_token: No Token Found or Expired")
         return token.to_token()

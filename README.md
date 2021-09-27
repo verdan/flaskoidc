@@ -47,12 +47,6 @@ _(default: 'google')_
 The name of the OIDC provider, like `google`, `okta`, `keycloak` etc. I have verified this package only for
 google, okta and keycloak. Please make sure to open a new issue if any of your OIDC provider is not working.
 
-#### FLASK_OIDC_PROVIDER_ADDITIONAL_PARAMETERS_FILE_PATH
-_(default: None)_
-
-The absolute path to a json file holding key value pairs of additional parameters ro be appended during client 
-registration. This will overwrite any default parameters for a given OIDC provider.
-
 #### FLASK_OIDC_SCOPES 
 _(default: 'openid email profile')_
 
@@ -95,6 +89,18 @@ Discovery Documents may be retrieved from:
 - `Auth0`: https://[YOUR_DOMAIN]/.well-known/openid-configuration
 - `Keycloak: http://[KEYCLOAK_HOST]:[KEYCLOAK_PORT]/auth/realms/[REALM]/.well-known/openid-configuration
 
+
+#### FLASK_OIDC_OVERWRITE_REDIRECT_URI
+_(default: '/')_
+In some cases you may need to redirect to a different endpoint after a successful login. This environment lets you set that endpoint. By default, this redirects to `/`. 
+
+#### FLASK_OIDC_PROVIDER_ADDITIONAL_PARAMETERS_FILE_PATH
+_(default: None)_
+
+The absolute path to a json file holding key value pairs of additional parameters ro be appended during client 
+registration. This will overwrite any default parameters for a given OIDC provider.
+
+....
 
 A few other environment variables along with their default values are. 
 
