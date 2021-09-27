@@ -47,6 +47,12 @@ _(default: 'google')_
 The name of the OIDC provider, like `google`, `okta`, `keycloak` etc. I have verified this package only for
 google, okta and keycloak. Please make sure to open a new issue if any of your OIDC provider is not working.
 
+#### FLASK_OIDC_PROVIDER_ADDITIONAL_PARAMETERS_FILE_PATH
+_(default: None)_
+
+The absolute path to a json file holding key value pairs of additional parameters ro be appended during client 
+registration. This will overwrite any default parameters for a given OIDC provider.
+
 #### FLASK_OIDC_SCOPES 
 _(default: 'openid email profile')_
 
