@@ -49,6 +49,6 @@ class BaseConfig(object):
     REDIRECT_URI = os.environ.get('FLASK_OIDC_REDIRECT_URI', '/auth')
     CONFIG_URL = os.environ.get('FLASK_OIDC_CONFIG_URL', '')
 
-    SQLALCHEMY_TRACK_MODIFICATIONS = os.environ.get('SQLALCHEMY_TRACK_MODIFICATIONS', False)
-    SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI", 'sqlite:///sessions.db')
+    SQLALCHEMY_TRACK_MODIFICATIONS = os.environ.get('FLASK_OIDC_SQLALCHEMY_TRACK_MODIFICATIONS', False)
+    SQLALCHEMY_DATABASE_URI = os.environ.get("FLASK_OIDC_SQLALCHEMY_DATABASE_URI", 'sqlite:///sessions.db')
 
