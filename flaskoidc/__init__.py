@@ -168,14 +168,18 @@ class FlaskOIDC(Flask):
         defaults["ENV"] = get_env()
         defaults["DEBUG"] = get_debug_flag()
 
+        _required_fields = ["CLIENT_ID", "CLIENT_SECRET", "CONFIG_URL"]
+
         # Append all the configurations from the base config class.
         for key, value in BaseConfig.__dict__.items():
             if not key.startswith("__"):
                 if key in ["CLIENT_ID", "CLIENT_SECRET"]:
                     key = f"{BaseConfig.OIDC_PROVIDER.upper()}_{key}"
-                    if not value:
-                        raise RuntimeError(
-                            f"Invalid Configuration: {key} is required and can not be empty."
-                        )
+
+                if key in _required_fields and not value:
+                    raise RuntimeError(
+                        f"Invalid Configuration: {key} is required and can not be empty."
+                    )
+
                 defaults[key] = value
         return self.config_class(root_path, defaults)
