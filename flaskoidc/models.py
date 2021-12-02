@@ -100,6 +100,9 @@ def _fetch_token(name):
         if not token:
             raise LoginRequiredError("_fetch_token: No Token Found or Expired")
         return token.to_token()
+    except KeyError:
+        LOGGER.info("User not found in the session, redirecting to login")
+        raise LoginRequiredError
     except Exception:
         LOGGER.error("Unexpected Error", exc_info=True)
         raise LoginRequiredError
