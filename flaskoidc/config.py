@@ -31,6 +31,7 @@ class BaseConfig(object):
     USER_ID_FIELD = os.environ.get("FLASK_OIDC_USER_ID_FIELD", "email")
     CLIENT_ID = os.environ.get("FLASK_OIDC_CLIENT_ID", "")
     CLIENT_SECRET = os.environ.get("FLASK_OIDC_CLIENT_SECRET", "")
+    SCHEMA = os.environ.get("FLASK_OIDC_FORCE_SCHEMA", "http")
     REDIRECT_URI = os.environ.get("FLASK_OIDC_REDIRECT_URI", "/auth")
     OVERWRITE_REDIRECT_URI = os.environ.get("FLASK_OIDC_OVERWRITE_REDIRECT_URI", "/")
     CONFIG_URL = os.environ.get("FLASK_OIDC_CONFIG_URL", "")
