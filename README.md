@@ -70,7 +70,7 @@ _(default: '')_
 
 Client Secret that you get once you create a new application on your OIDC provider.
 
-#### FLASK_OIDC_SCHEMA
+#### FLASK_OIDC_FORCE_SCHEMA
 _(default: 'http')_
 
 This must be 'https' in production. Defines the redirection schema returned by _'/login'_
