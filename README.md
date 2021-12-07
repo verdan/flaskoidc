@@ -70,11 +70,10 @@ _(default: '')_
 
 Client Secret that you get once you create a new application on your OIDC provider.
 
-
-#### FLASK_OIDC_FORCE_SCHEMA
+#### FLASK_OIDC_FORCE_SCHEME
 _(default: 'http')_
 
-This must be 'https' in production. Defines the redirection schema returned by _'/login'_
+Can be used to force a URL scheme when crafting a `redirect_uri` in _'/login'_ route.  Useful when Flask application is behind an ingress doing TLS termination.
 
 #### FLASK_OIDC_REDIRECT_URI
 _(default: '/auth')_
