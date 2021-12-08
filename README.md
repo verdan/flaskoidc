@@ -93,7 +93,7 @@ Discovery Documents may be retrieved from:
   - https://[YOUR_OKTA_DOMAIN]/.well-known/openid-configuration
   - https://[YOUR_OKTA_DOMAIN]/oauth2/[AUTH_SERVER_ID]/.well-known/openid-configuration
 - `Auth0`: https://[YOUR_DOMAIN]/.well-known/openid-configuration
-- `Keycloak: http://[KEYCLOAK_HOST]:[KEYCLOAK_PORT]/auth/realms/[REALM]/.well-known/openid-configuration
+- `Keycloak`: http://[KEYCLOAK_HOST]:[KEYCLOAK_PORT]/auth/realms/[REALM]/.well-known/openid-configuration
 
 
 #### FLASK_OIDC_OVERWRITE_REDIRECT_URI
