@@ -198,6 +198,7 @@ class FlaskOIDC(Flask):
             LOGGER.exception(
                 f"Exception occurred _update_token(token={token}...", exc_info=True
             )
+            raise LoginRequiredError("_update_token: Couldn't update the token")
 
     def _fetch_token(self, name):
         from flaskoidc.models import OAuth2Token
