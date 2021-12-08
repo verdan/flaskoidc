@@ -188,7 +188,7 @@ class FlaskOIDC(Flask):
     def _update_token(self, name, token, refresh_token=None, access_token=None):
         from flaskoidc.models import OAuth2Token
 
-        LOGGER.debug(f"Calling _update_token(token={token}...")
+        LOGGER.debug(f"Calling _update_token")
         try:
             token = self.auth_client.fetch_access_token(refresh_token=refresh_token, grant_type="refresh_token")
             return OAuth2Token.update_tokens(
@@ -196,7 +196,7 @@ class FlaskOIDC(Flask):
             )
         except Exception:
             LOGGER.exception(
-                f"Exception occurred _update_token(token={token}...", exc_info=True
+                f"Exception occurred _update_token", exc_info=True
             )
             raise LoginRequiredError("_update_token: Couldn't update the token")
 
