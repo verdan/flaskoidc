@@ -3,6 +3,7 @@ import logging
 
 import time
 from authlib.integrations.flask_client import OAuth
+from authlib.oidc.core.errors import LoginRequiredError
 from flask import redirect, Flask, request, session, abort
 from flask.helpers import get_env, get_debug_flag, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -85,11 +86,11 @@ class FlaskOIDC(Flask):
             )
 
         with self.app_context():
-            from flaskoidc.models import OAuth2Token, _fetch_token, _update_token
+            from flaskoidc.models import OAuth2Token
 
             self.db.create_all()
 
-            oauth = OAuth(self, fetch_token=_fetch_token, update_token=_update_token)
+            oauth = OAuth(self, fetch_token=self._fetch_token, update_token=self._update_token)
 
             self.auth_client = oauth.register(
                 name=_provider,
@@ -183,3 +184,42 @@ class FlaskOIDC(Flask):
 
                 defaults[key] = value
         return self.config_class(root_path, defaults)
+
+    def _update_token(self, name, token, refresh_token=None, access_token=None):
+        from flaskoidc.models import OAuth2Token
+
+        LOGGER.debug(f"Calling _update_token")
+        try:
+            token = self.auth_client.fetch_access_token(refresh_token=refresh_token, grant_type="refresh_token")
+            return OAuth2Token.update_tokens(
+                name, token, refresh_token=refresh_token, access_token=access_token
+            )
+        except Exception:
+            LOGGER.exception(
+                f"Exception occurred _update_token", exc_info=True
+            )
+            raise LoginRequiredError("_update_token: Couldn't update the token")
+
+    def _fetch_token(self, name):
+        from flaskoidc.models import OAuth2Token
+
+        try:
+            user_id = session["user"]["__id"]
+            LOGGER.debug(f"Calling _fetch_token(name={name},user_id={user_id})...")
+
+            token = OAuth2Token.get(name=name, user_id=user_id)
+            if not token:
+                raise LoginRequiredError("_fetch_token: No Token Found")
+            token_dict = token.to_token()
+            _current_time = round(time.time())
+            if token_dict["expires_at"] <= _current_time:
+                token_with_refresh_token = OAuth2Token.get_with_refresh_token(name=name, user_id=user_id).to_token()
+                return self._update_token(name, token_with_refresh_token, token_with_refresh_token["refresh_token"],
+                                          token_with_refresh_token["access_token"])
+            return token_dict
+        except KeyError:
+            LOGGER.info("User not found in the session, redirecting to login")
+            raise LoginRequiredError
+        except Exception:
+            LOGGER.error("Unexpected Error", exc_info=True)
+            raise LoginRequiredError
