@@ -113,7 +113,7 @@ class FlaskOIDC(Flask):
 
         @self.route("/login")
         def login():
-            redirect_uri = url_for("auth", _external=True, _schema=self.config.get("SCHEMA"))
+            redirect_uri = url_for("auth", _external=True, _scheme=self.config.get("SCHEME"))
             return self.auth_client.authorize_redirect(redirect_uri)
 
         @self.route(self.config.get("REDIRECT_URI"))

@@ -70,11 +70,10 @@ _(default: '')_
 
 Client Secret that you get once you create a new application on your OIDC provider.
 
-
-#### FLASK_OIDC_FORCE_SCHEMA
+#### FLASK_OIDC_FORCE_SCHEME
 _(default: 'http')_
 
-This must be 'https' in production. Defines the redirection schema returned by _'/login'_
+Can be used to force a URL scheme when crafting a `redirect_uri` in _'/login'_ route.  Useful when Flask application is behind an ingress doing TLS termination.
 
 #### FLASK_OIDC_REDIRECT_URI
 _(default: '/auth')_
@@ -93,7 +92,7 @@ Discovery Documents may be retrieved from:
   - https://[YOUR_OKTA_DOMAIN]/.well-known/openid-configuration
   - https://[YOUR_OKTA_DOMAIN]/oauth2/[AUTH_SERVER_ID]/.well-known/openid-configuration
 - `Auth0`: https://[YOUR_DOMAIN]/.well-known/openid-configuration
-- `Keycloak: http://[KEYCLOAK_HOST]:[KEYCLOAK_PORT]/auth/realms/[REALM]/.well-known/openid-configuration
+- `Keycloak`: http://[KEYCLOAK_HOST]:[KEYCLOAK_PORT]/auth/realms/[REALM]/.well-known/openid-configuration
 
 
 #### FLASK_OIDC_OVERWRITE_REDIRECT_URI
