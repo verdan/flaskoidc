@@ -4,9 +4,9 @@ from setuptools import setup, find_packages
 
 requirements = [
     "Flask>=1.0.2",
-    "Authlib==0.15.4",
-    "requests==2.25.1",
-    "Flask-SQLAlchemy==2.5.1",
+    "Authlib>=0.15.4",
+    "requests>=2.25.1",
+    "Flask-SQLAlchemy>=2.5.1",
 ]
 
 # read the contents of your README file
