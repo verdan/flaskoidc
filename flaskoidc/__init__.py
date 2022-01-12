@@ -1,5 +1,6 @@
 import json
 import logging
+import datetime
 
 import time
 from authlib.integrations.flask_client import OAuth
@@ -66,7 +67,9 @@ class FlaskOIDC(Flask):
                 LOGGER.exception(
                     "User not logged in, redirecting to auth", exc_info=True
                 )
-                return redirect(url_for("logout", _external=True, origin=request.url))
+                resp = redirect(url_for("logout", _external=True))
+                resp.set_cookie('failed_authentication_url', request.url, httponly=True, samesite="Strict")
+                return resp
 
     def __init__(self, *args, **kwargs):
         super(FlaskOIDC, self).__init__(*args, **kwargs)
@@ -112,10 +115,7 @@ class FlaskOIDC(Flask):
 
         @self.route("/login")
         def login():
-            extraArgs = {}
-            if "origin" in request.args:
-                extraArgs["origin"] = request.args["origin"]
-            redirect_uri = url_for("auth", _external=True, _scheme=self.config.get("SCHEME"), **extraArgs)
+            redirect_uri = url_for("auth", _external=True, _scheme=self.config.get("SCHEME"))
             return self.auth_client.authorize_redirect(redirect_uri)
 
         @self.route(self.config.get("REDIRECT_URI"))
@@ -147,9 +147,14 @@ class FlaskOIDC(Flask):
                 session["user"] = user
                 session["user"]["__id"] = user_id
                 redirectUrl = self.config.get("OVERWRITE_REDIRECT_URI")
-                if not redirectUrl and "origin" in request.args:
-                    redirectUrl = request.args["origin"]
-                return redirect(redirectUrl)
+                if redirectUrl:
+                    return redirect(redirectUrl)
+                url = request.cookies.get("failed_authentication_url")
+                resp = redirect(url | "")
+                if url:
+                    redirectUrl = url
+                    resp.set_cookie("failed_authentication_url", "", expires=datetime.datetime.now())
+                return resp
             except Exception as ex:
                 LOGGER.exception(ex)
                 raise ex
@@ -160,10 +165,7 @@ class FlaskOIDC(Flask):
             # if session.get("user"):
             #     OAuth2Token.delete(name=_provider, user_id=session["user"]["__id"])
             session.pop("user", None)
-            extraArgs = {}
-            if "origin" in request.args:
-                extraArgs["origin"] = request.args["origin"]
-            return redirect(url_for("login", **extraArgs))
+            return redirect(url_for("login"))
 
     def make_config(self, instance_relative=False):
         """
