@@ -124,6 +124,5 @@ SQLALCHEMY_DATABASE_URI: 'sqlite:///sessions.db'
 ```
 
 ## Known Issues:
-- Need to make sure it still works with the clients_secrets.json file or via env variables for each endpoint of a custom OIDC provider.
-- `refresh_token` is not yet working. I am still trying to figure out how to do this using Authlib. 
+- Need to make sure it still works with the clients_secrets.json file or via env variables for each endpoint of a custom OIDC provider. 
 - You may enter problems when installing cryptography, check its [official document](https://cryptography.io/en/latest/installation/)
