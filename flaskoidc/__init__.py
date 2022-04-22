@@ -149,9 +149,8 @@ class FlaskOIDC(Flask):
 
         @self.route("/logout")
         def logout():
-            # ToDo: Think of if we should delete the session entity or not
-            # if session.get("user"):
-            #     OAuth2Token.delete(name=_provider, user_id=session["user"]["__id"])
+            if session.get("user"):
+                OAuth2Token.delete(name=_provider, user_id=session["user"]["__id"])
             session.pop("user", None)
             return redirect(url_for("login"))
 
