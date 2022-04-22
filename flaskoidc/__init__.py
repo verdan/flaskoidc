@@ -128,7 +128,7 @@ class FlaskOIDC(Flask):
             ]
             try:
                 token = self.auth_client.authorize_access_token()
-                user = self.auth_client.parse_id_token(token)
+                user = self.auth_client.parse_id_token(token, token.get('nonce'))
                 user_id = user.get(self.config.get("USER_ID_FIELD"))
                 if not user_id:
                     raise BadRequest(
