@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 requirements = [
     "Flask>=1.0.2",
-    "Authlib>=0.15.4,<1.0.0",
+    "Authlib>=1.0.0,<2.0.0",
     "requests>=2.25.1",
     "Flask-SQLAlchemy>=2.5.1",
 ]
