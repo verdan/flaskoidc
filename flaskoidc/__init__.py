@@ -113,7 +113,7 @@ class FlaskOIDC(Flask):
 
         @self.route("/login")
         def login():
-            redirect_uri = url_for("auth", _external=True, _scheme=self.config.get("SCHEME"))
+            redirect_uri = url_for("auth", next=request.url, _external=True, _scheme=self.config.get("SCHEME"))
             return self.auth_client.authorize_redirect(redirect_uri)
 
         @self.route(self.config.get("REDIRECT_URI"))
@@ -143,6 +143,7 @@ class FlaskOIDC(Flask):
                 session["user"] = user
                 session["user"]["__id"] = user_id
                 url = request.args.get("next")
+                LOGGER.info(f"Next url is: {url}")
                 if url:
                     return redirect(url_for(url))
                 return redirect(self.config.get("OVERWRITE_REDIRECT_URI"))
