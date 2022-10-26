@@ -150,7 +150,7 @@ class FlaskOIDC(Flask):
                     return redirect(redirect_url)
                 url = request.cookies.get("failed_authentication_url")
                 if url:
-                    resp = redirect(url)
+                    resp = redirect(url_for(url))
                     return resp.set_cookie("failed_authentication_url", "", expires=datetime.datetime.now())
                 return redirect("")
             except Exception as ex:
