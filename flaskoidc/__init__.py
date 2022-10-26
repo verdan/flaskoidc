@@ -1,5 +1,6 @@
 import json
 import logging
+import datetime
 
 import time
 from authlib.integrations.flask_client import OAuth
@@ -67,7 +68,9 @@ class FlaskOIDC(Flask):
                 LOGGER.exception(
                     "User not logged in, redirecting to auth", exc_info=True
                 )
-                return redirect(url_for("logout", _external=True))
+                resp = redirect(url_for("logout", _external=True))
+                resp.set_cookie('failed_authentication_url', request.url, httponly=True, samesite="Strict")
+                return resp
 
     def __init__(self, *args, **kwargs):
         super(FlaskOIDC, self).__init__(*args, **kwargs)
@@ -142,7 +145,14 @@ class FlaskOIDC(Flask):
                 OAuth2Token.save(name=_provider, user_id=user_id, **db_token)
                 session["user"] = user
                 session["user"]["__id"] = user_id
-                return redirect(self.config.get("OVERWRITE_REDIRECT_URI"))
+                redirect_url = self.config.get("OVERWRITE_REDIRECT_URI")
+                if redirect_url:
+                    return redirect(redirect_url)
+                url = request.cookies.get("failed_authentication_url")
+                if url:
+                    resp = redirect(url)
+                    return resp.set_cookie("failed_authentication_url", "", expires=datetime.datetime.now())
+                return redirect("")
             except Exception as ex:
                 LOGGER.exception(ex)
                 raise ex
