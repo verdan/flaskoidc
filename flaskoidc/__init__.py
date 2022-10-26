@@ -67,7 +67,8 @@ class FlaskOIDC(Flask):
                 LOGGER.exception(
                     "User not logged in, redirecting to auth", exc_info=True
                 )
-                return redirect(url_for("logout", _external=True, next=request.url))
+                session['next'] = request.url
+                return redirect(url_for("logout", _external=True))
 
     def __init__(self, *args, **kwargs):
         super(FlaskOIDC, self).__init__(*args, **kwargs)
@@ -113,7 +114,8 @@ class FlaskOIDC(Flask):
 
         @self.route("/login")
         def login():
-            redirect_uri = url_for("auth", next=request.url, _external=True, _scheme=self.config.get("SCHEME"))
+            session['next'] = request.url
+            redirect_uri = url_for("auth", _external=True, _scheme=self.config.get("SCHEME"))
             return self.auth_client.authorize_redirect(redirect_uri)
 
         @self.route(self.config.get("REDIRECT_URI"))
@@ -142,7 +144,7 @@ class FlaskOIDC(Flask):
                 OAuth2Token.save(name=_provider, user_id=user_id, **db_token)
                 session["user"] = user
                 session["user"]["__id"] = user_id
-                url = request.args.get("next")
+                url = session.get("next")
                 LOGGER.info(f"Next url is: {url}")
                 if url:
                     return redirect(url_for(url))
@@ -156,7 +158,8 @@ class FlaskOIDC(Flask):
             if session.get("user"):
                 OAuth2Token.delete(name=_provider, user_id=session["user"]["__id"])
             session.pop("user", None)
-            return redirect(url_for("login", next=request.url))
+            session['next'] = request.url
+            return redirect(url_for("login"))
 
     def make_config(self, instance_relative=False):
         """
