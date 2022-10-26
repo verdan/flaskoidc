@@ -128,7 +128,7 @@ class FlaskOIDC(Flask):
             ]
             try:
                 token = self.auth_client.authorize_access_token()
-                user = self.auth_client.parse_id_token(token)
+                user = self.auth_client.parse_id_token(token, token.get('nonce'))
                 user_id = user.get(self.config.get("USER_ID_FIELD"))
                 if not user_id:
                     raise BadRequest(
@@ -149,9 +149,8 @@ class FlaskOIDC(Flask):
 
         @self.route("/logout")
         def logout():
-            # ToDo: Think of if we should delete the session entity or not
-            # if session.get("user"):
-            #     OAuth2Token.delete(name=_provider, user_id=session["user"]["__id"])
+            if session.get("user"):
+                OAuth2Token.delete(name=_provider, user_id=session["user"]["__id"])
             session.pop("user", None)
             return redirect(url_for("login"))
 
@@ -211,9 +210,14 @@ class FlaskOIDC(Flask):
             token_dict = token.to_token()
             _current_time = round(time.time())
             if token_dict["expires_at"] <= _current_time:
-                token_with_refresh_token = OAuth2Token.get_with_refresh_token(name=name, user_id=user_id).to_token()
-                return self._update_token(name, token_with_refresh_token, token_with_refresh_token["refresh_token"],
-                                          token_with_refresh_token["access_token"])
+                token_with_refresh_token = OAuth2Token.get_with_refresh_token(name=name, user_id=user_id)
+                if token_with_refresh_token is None:
+                    LOGGER.info("Refresh token could not be found, redirecting to login")
+                    raise LoginRequiredError
+                token_with_refresh_token_dict = token_with_refresh_token.to_token()
+                return self._update_token(name, token_with_refresh_token_dict,
+                                          token_with_refresh_token_dict["refresh_token"],
+                                          token_with_refresh_token_dict["access_token"])
             return token_dict
         except KeyError:
             LOGGER.info("User not found in the session, redirecting to login")
