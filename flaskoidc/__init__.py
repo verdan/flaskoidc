@@ -144,7 +144,6 @@ class FlaskOIDC(Flask):
                 session["user"] = user
                 session["user"]["__id"] = user_id
                 url = session.get("next")
-                LOGGER.info(f"Next url is: {url}")
                 if url:
                     session.pop("next", None)
                     return redirect(url)
