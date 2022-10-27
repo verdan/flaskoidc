@@ -1,3 +1,4 @@
+import fnmatch
 import json
 import logging
 
@@ -28,9 +29,11 @@ class FlaskOIDC(Flask):
             f",login,logout,{self.config.get('REDIRECT_URI').strip('/')}"
         )
 
-        if request.path.strip("/") in whitelisted_endpoints.split(
-            ","
-        ) or request.endpoint in whitelisted_endpoints.split(","):
+        whitelisted_endpoints = whitelisted_endpoints.split(",")
+        request_path = request.path.strip("/")
+        if request_path in whitelisted_endpoints or \
+           any(fnmatch.fnmatch(request_path, endpoint) for endpoint in whitelisted_endpoints) or \
+           request.endpoint in whitelisted_endpoints:
             return
 
         # If accepting token in the request headers
