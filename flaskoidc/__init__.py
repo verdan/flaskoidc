@@ -67,6 +67,7 @@ class FlaskOIDC(Flask):
                 LOGGER.exception(
                     "User not logged in, redirecting to auth", exc_info=True
                 )
+                session["next"] = request.url
                 return redirect(url_for("logout", _external=True))
 
     def __init__(self, *args, **kwargs):
@@ -142,6 +143,10 @@ class FlaskOIDC(Flask):
                 OAuth2Token.save(name=_provider, user_id=user_id, **db_token)
                 session["user"] = user
                 session["user"]["__id"] = user_id
+                url = session.get("next")
+                if url:
+                    session.pop("next", None)
+                    return redirect(url)
                 return redirect(self.config.get("OVERWRITE_REDIRECT_URI"))
             except Exception as ex:
                 LOGGER.exception(ex)
