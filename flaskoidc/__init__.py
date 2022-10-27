@@ -67,7 +67,7 @@ class FlaskOIDC(Flask):
                 LOGGER.exception(
                     "User not logged in, redirecting to auth", exc_info=True
                 )
-                session["next"] = request.path
+                session["next"] = request.url
                 return redirect(url_for("logout", _external=True))
 
     def __init__(self, *args, **kwargs):
@@ -147,7 +147,7 @@ class FlaskOIDC(Flask):
                 LOGGER.info(f"Next url is: {url}")
                 if url:
                     session.pop("next", None)
-                    return redirect(url_for(url))
+                    return redirect(url)
                 return redirect(self.config.get("OVERWRITE_REDIRECT_URI"))
             except Exception as ex:
                 LOGGER.exception(ex)
