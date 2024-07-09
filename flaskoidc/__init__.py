@@ -5,7 +5,7 @@ import time
 from authlib.integrations.flask_client import OAuth
 from authlib.oidc.core.errors import LoginRequiredError
 from flask import redirect, Flask, request, session, abort
-from flask.helpers import get_env, get_debug_flag, url_for
+from flask.helpers import get_debug_flag, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.exceptions import BadRequest
 
@@ -163,7 +163,13 @@ class FlaskOIDC(Flask):
         if instance_relative:
             root_path = self.instance_path
         defaults = dict(self.default_config)
-        defaults["ENV"] = get_env()
+
+        try:
+            from flask.helpers import get_env
+            defaults["ENV"] = get_env()
+        except ImportError:
+            pass # get_env has been removed in Flask>=2.3
+
         defaults["DEBUG"] = get_debug_flag()
 
         _required_fields = ["CLIENT_ID", "CLIENT_SECRET", "CONFIG_URL"]
